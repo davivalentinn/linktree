@@ -1,5 +1,5 @@
-import { Footer } from "../../components/Footer"
-
+import { Footer } from "../../components/Footer/Footer"
+import { SocialMedia } from "../../components/SocialMedia/SocialMedia"
 export function Home() {
     return (
         <div className="flex flex-col w-full py-4 items-center justify-center">
@@ -13,7 +13,12 @@ export function Home() {
                     </a>
                 </section>
 
-                <Footer/>
+                <Footer>
+                
+                    
+                    
+                </Footer>
+
             </main>
         </div>
     )
