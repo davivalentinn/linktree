@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
-//Importando components
+import 'remixicon/fonts/remixicon.css';
+//Importando paginas
 import { Home } from './pages/home'
 import { Admin } from './pages/admin'
 import { Login } from './pages/login'
