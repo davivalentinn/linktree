@@ -7,7 +7,6 @@ interface SocialProps {
 
 export function SocialMedia({ url, children }: SocialProps) {
     return (
-
        
             <a
                 href={url}
