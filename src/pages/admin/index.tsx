@@ -1,15 +1,91 @@
 import { Header } from "../../components/Header/Header";
 import { Input } from "../../components/Input/Input";
-import { useState, type FormEvent } from "react";
-import {FiTrash2} from "react-icons/fi"
+import { useEffect, useState, type FormEvent } from "react";
+import { FiTrash2 } from "react-icons/fi"
+
+import { db } from "../../services/firebaseConnection";
+import {
+    addDoc, //Gera um uid aleatorio
+    collection,
+    onSnapshot, //Busca as informações em tempo real no bd
+    query,
+    orderBy,
+    doc,
+    deleteDoc
+}
+    from 'firebase/firestore';
+
+interface LinkProps {
+    id: string;
+    name: string;
+    url: string;
+    bg: string;
+    color: string;
+}
+
 export function Admin() {
     const [nameInput, setNameInput] = useState("");
     const [urlInput, setUrlInput] = useState("");
     const [textColorInput, setTextColorInput] = useState("#00000");
     const [backgroundColorInput, setBackgroundColorInput] = useState("#f1f1f1");
 
-    async function handleRegister(e: FormEvent){
+    const [links, setLinks] = useState<LinkProps[]>([]);
+
+    useEffect(() => {
+        const linksRef = collection(db, "links");
+        const queryRef = query(linksRef, orderBy("created", "asc")); //Personaliza e ordena a busca no bd
+
+        const unsub = onSnapshot(queryRef, (snapshot) => {
+            let lista = [] as LinkProps[];
+
+            snapshot.forEach((doc) => {
+                lista.push({
+                    id: doc.id,
+                    name: doc.data().name,
+                    url: doc.data().url,
+                    bg: doc.data().bg,
+                    color: doc.data().color
+                })
+            })
+
+            setLinks(lista);
+        })
+
+
+    }, [])
+
+    function handleRegister(e: FormEvent) {
         e.preventDefault();
+
+        if (nameInput === '' || urlInput === '') {
+            alert('Preenchan todos os campos')
+            return;
+        }
+
+        addDoc(collection(db, "links"), {
+            name: nameInput,
+            url: urlInput,
+            bg: backgroundColorInput,
+            color: textColorInput,
+            created: new Date()
+        })
+
+            .then(() => {
+                setNameInput("")
+                setUrlInput("")
+            })
+
+            .catch((error) => {
+                alert("Erro ao cadastrar no banco de dados")
+                console.log(error);
+                return;
+            })
+    }
+
+    async function handleDeleteLink(id: string){
+        const docRef = doc(db, "links", id)
+
+        await deleteDoc(docRef);
     }
     return (
         <div className="flex items-center flex-col min-h-screen pb-7">
@@ -17,7 +93,7 @@ export function Admin() {
 
 
             <form className="flex flex-col mt-15 mb-3 w-full max-w-3xl px-3"
-            onSubmit={handleRegister}
+                onSubmit={handleRegister}
             >
                 <label className="text-white font-medium mt-2 mb-2">Nome do link</label>
                 <Input
@@ -66,27 +142,31 @@ export function Admin() {
                     </div>
                 )}
 
-                <div className="flex justify-center items-center">
-                    <button type="submit" className="mb-7 bg-blue-600 h-9 flex justify-center items-center text-white font-bold rounded w-11/12 max-w-lg cursor-pointer hover:bg-blue-500 transition-all">
+               
+                    <button type="submit" className="mb-7 bg-blue-600 h-9 flex justify-center items-center text-white font-bold rounded cursor-pointer hover:bg-blue-500 transition-all">
                         Cadastrar
                     </button>
-                </div>
+                
             </form>
 
             <h2 className="font-bold text-white mb-4 text-2xl">
                 Meus Links
             </h2>
 
-            <article className="flex items-center justify-between w-11/12 max-w-xl rounded py-2 px-2 mb-2 select-none"
-            style={{backgroundColor: "#FFF", color: "#000"}}
-            >
-                <p className="px-2">Canal do youtube</p>
-                <div>
-                    <button className="border border-dashed bg-neutral-900 p-2 cursor-pointer rounded">
-                        <FiTrash2 size={18} color="#fff"/>
-                    </button>
-                </div>
-            </article>
+            {links.map((link) => (
+                <article key={link.id} className="flex items-center justify-between w-11/12 max-w-xl rounded py-2 px-2 mb-2 select-none"
+                    style={{ backgroundColor: link.bg, color: link.color }}
+                >
+                    <p className="px-2">{link.name}</p>
+                    <div>
+                        <button className="border border-dashed bg-neutral-900 p-2 cursor-pointer rounded"
+                        onClick={ () => handleDeleteLink(link.id)}
+                        >
+                            <FiTrash2 size={18} color="#fff" />
+                        </button>
+                    </div>
+                </article>
+            ))}
         </div>
     )
 }
